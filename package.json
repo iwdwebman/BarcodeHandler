@@ -1,6 +1,6 @@
 {
    "name": "@starrsoftware/barcodehandler",
-   "version": "0.1.0",
+   "version": "0.2.0",
    "description": "Globally Handles paste events for barcodes and gives subscribed functions an object with the barcode and what type it conforms to",
    "author": "starrsoftware",
    "license": "MIT",

@@ -1,11 +1,5 @@
 import { useState, useEffect } from 'react';
 
-let globalText = '';
-let globalDate = new Date();
-
-let listeners = {};
-let customTypes = {};
-
 export const BARCODE_TYPES = {
    UNKNOWN: 0,
    EAN: 1,
@@ -21,16 +15,31 @@ export const BARCODE_NAMES = {
 };
 
 export const BARCODE_REGEXES = {
-   [BARCODE_TYPES.EAN]: /\d{13}/,
-   [BARCODE_TYPES.UPC]: /\d{12}/,
-   [BARCODE_TYPES.AMAZON_FNSKU]: /X[0-9A-Z]{9}/
+   [BARCODE_TYPES.EAN]: /\b\d{13}\b/,
+   [BARCODE_TYPES.UPC]: /\b\d{12}\b/,
+   [BARCODE_TYPES.AMAZON_FNSKU]: /\bcX[0-9A-Z]{9}\b/
 };
 
+export const DEFAULT_ENDING_KEYS = {
+   ENTER: 'Enter',
+   TAB: 'Tab'
+};
+
+const DEFAULT_KEY_TIMING = 100;
+
+let globalText = '';
+let globalDate = new Date();
+
+let listeners = {};
+let customTypes = {};
+let CurrentEndingKeys = [DEFAULT_ENDING_KEYS.ENTER, DEFAULT_ENDING_KEYS.TAB];
+let keyTiming = DEFAULT_KEY_TIMING;
+let allowPaste = false;
+
 //Be sure to set more restrictive first as some barcode types overlap when it comes to the data they return. i.e. EAN before UPC
-export const SetCustomType = (value, name, regex) => {
+export const SetCustomType = (key, name, regex) => {
    if (
-      Object.values(BARCODE_TYPES).includes(value) ||
-      value < 0 ||
+      (key || '').length <= 0 ||
       (name || '').length <= 0 ||
       !regex ||
       typeof regex.test !== 'function'
@@ -38,7 +47,21 @@ export const SetCustomType = (value, name, regex) => {
       return false;
    }
 
-   customTypes[value] = { name, regex };
+   customTypes[key] = { name, regex };
+};
+
+export const SetEndingKeys = (keys) => {
+   CurrentEndingKeys = keys;
+};
+
+export const SetKeyTiming = (timing) => {
+   if (timing > 0 && timing < 1000) {
+      keyTiming = timing;
+   }
+};
+
+export const SetAllowPaste = (allow) => {
+   allowPaste = !!allow;
 };
 
 export const AddListener = (name, listener) => {
@@ -102,16 +125,18 @@ export default function BarcodeHandler(props) {
             });
          };
 
-         /*document.addEventListener('paste', (e) => {
-            handleBarcode(e.clipboardData.getData('Text'));
-         });*/
+         document.addEventListener('paste', (e) => {
+            if (allowPaste) {
+               handleBarcode(e.clipboardData.getData('Text'));
+            }
+         });
          document.addEventListener('keydown', (e) => {
-            const isWithinTimeLimit = new Date() - globalDate < 200;
+            const isWithinTimeLimit = new Date() - globalDate < keyTiming;
             globalDate = new Date();
 
             if (e.key === 'Shift') {
                return;
-            } else if (e.code === 'Enter') {
+            } else if (CurrentEndingKeys.includes(e.code)) {
                if (isWithinTimeLimit) {
                   handleBarcode(globalText);
                }
