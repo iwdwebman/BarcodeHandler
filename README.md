@@ -13,7 +13,7 @@ npm install --save @starrsoftware/barcodehandler
 ## Example Usage
 
 ```jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import BarcodeHandler, { AddListener } from '@starrsoftware/barcodehandler';
 
 export default function BarcodeHandlerExample(props) {
